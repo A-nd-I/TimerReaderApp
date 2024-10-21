@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Left Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f6f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .result {
+            font-size: 18px;
+            margin: 10px 0;
+            color: #34495e;
+        }
+
+        .percentage {
+            font-size: 20px;
+            font-weight: bold;
+            color: #27ae60;
+            margin-top: 20px;
+        }
+
+        .highlight {
+            color: #2980b9;
+        }
+
+        #countdown {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #e74c3c;
+        }
+
+        .popup {
+            display: none;
+            background-color: rgba(0, 0, 0, 0.5);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .popup-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            font-size: 20px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Project Time Tracker</h1>
+        <div class="result"><span class="highlight">Days Left:</span> <span id="daysLeft"></span></div>
+        <div class="result"><span class="highlight">Weeks Left:</span> <span id="weeksLeft"></span></div>
+        <div class="result"><span class="highlight">Months Left:</span> <span id="monthsLeft"></span></div>
+        <div class="result"><span class="highlight">Hours Left:</span> <span id="hoursLeft"></span></div>
+        <div class="result"><span class="highlight">Seconds Left:</span> <span id="secondsLeft"></span></div>
+        <div class="percentage"><span id="percentagePassed"></span></div>
+        <div class="percentage"><span id="monthlyPercentagePassed"></span></div>
+        <div id="countdown"></div>
+    </div>
+
+    <div class="popup" id="popup">
+        <div class="popup-content">
+            Good luck with your project!
+        </div>
+    </div>
+
+    <script>
+        let countdownInterval;
+
+        function calculateTimeLeft() {
+            const startDate = new Date('2024-10-28T00:00:00');
+            const endDate = new Date('2025-05-30T00:00:00');
+            const now = new Date();
+
+            const totalTime = endDate - startDate;
+            const timeLeft = endDate - now;
+
+            const daysLeft = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+            const weeksLeft = Math.floor(daysLeft / 7);
+            const monthsLeft = (endDate.getMonth() - now.getMonth()) + (12 * (endDate.getFullYear() - now.getFullYear()));
+            const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
+            const secondsLeft = Math.floor(timeLeft / 1000);
+
+            const percentagePassed = ((totalTime - timeLeft) / totalTime * 100).toFixed(2);
+
+            let monthlyPercentagePassed;
+            if (now < startDate) {
+                monthlyPercentagePassed = `Project hasn't started yet.`;
+                showCountdown(startDate); // Start the countdown until the project starts
+            } else if (now >= startDate && now <= endDate) {
+                hideCountdown();
+                const projectMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                const projectMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+                const currentMonthTotalTime = projectMonthEnd - projectMonthStart;
+                const currentMonthTimePassed = now - projectMonthStart;
+                monthlyPercentagePassed = `Percentage of current project month passed: ${(currentMonthTimePassed / currentMonthTotalTime * 100).toFixed(2)}%`;
+            } else {
+                monthlyPercentagePassed = `Project is complete.`;
+            }
+
+            document.getElementById('daysLeft').textContent = `${daysLeft}`;
+            document.getElementById('weeksLeft').textContent = `${weeksLeft}`;
+            document.getElementById('monthsLeft').textContent = `${monthsLeft}`;
+            document.getElementById('hoursLeft').textContent = `${hoursLeft}`;
+            document.getElementById('secondsLeft').textContent = `${secondsLeft}`;
+            document.getElementById('percentagePassed').textContent = `Percentage of total time passed: ${percentagePassed}%`;
+            document.getElementById('monthlyPercentagePassed').textContent = monthlyPercentagePassed;
+        }
+
+        function showCountdown(startDate) {
+            clearInterval(countdownInterval);
+            countdownInterval = setInterval(function () {
+                const now = new Date();
+                const timeLeft = startDate - now;
+
+                const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+                if (timeLeft <= 0) {
+                    clearInterval(countdownInterval);
+                    document.getElementById('countdown').textContent = '';
+                    showPopup();
+                } else {
+                    document.getElementById('countdown').textContent = `Countdown until project starts: ${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds`;
+                }
+            }, 1000);
+        }
+
+        function hideCountdown() {
+            document.getElementById('countdown').textContent = '';
+            clearInterval(countdownInterval);
+        }
+
+        function showPopup() {
+            const popup = document.getElementById('popup');
+            popup.style.display = 'flex';
+            setTimeout(() => popup.style.display = 'none', 3000); // Hide after 3 seconds
+        }
+
+        calculateTimeLeft();
+        setInterval(calculateTimeLeft, 1000);
+    </script>
+</body>
+</html>
